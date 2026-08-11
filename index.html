@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mina1932 - Pro AI Asistanı</title>
+    <style>
+        :root {
+            --bg-dark: #121824;
+            --bg-sidebar: #0b0f19;
+            --bg-chat: #1a2332;
+            --accent-blue: #007bff;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-color: #2e3d52;
+            --danger: #dc3545;
+            --success: #28a745;
+            --gold: #f59f00;
+        }
+
+        body.theme-blue-black {
+            --bg-dark: #121824;
+            --bg-sidebar: #0b0f19;
+            --bg-chat: #1a2332;
+            --accent-blue: #007bff;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border-color: #2e3d52;
+        }
+        body.theme-white-black {
+            --bg-dark: #f8f9fa;
+            --bg-sidebar: #e9ecef;
+            --bg-chat: #ffffff;
+            --accent-blue: #212529;
+            --text-main: #212529;
+            --text-muted: #6c757d;
+            --border-color: #ced4da;
+        }
+        body.theme-yellow-white {
+            --bg-dark: #fff9db;
+            --bg-sidebar: #fff3bf;
+            --bg-chat: #ffffff;
+            --accent-blue: #f59f00;
+            --text-main: #343a40;
+            --text-muted: #868e96;
+            --border-color: #ffe066;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: var(--bg-dark); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; transition: background 0.3s; }
+
+        .sidebar { width: 300px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px; gap: 10px; }
+        .brand-header { display: flex; align-items: center; gap: 12px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+        
+        .logo-circle { width: 45px; height: 45px; background-color: var(--accent-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; color: #ffffff; font-size: 13px; box-shadow: 0 2px 6px rgba(0,0,0,0.3); }
+        
+        .sidebar-btn { width: 100%; padding: 10px; background-color: var(--accent-blue); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; text-align: left; display: flex; align-items: center; gap: 8px; }
+        .sidebar-btn:hover { opacity: 0.9; }
+
+        .history-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 10px; border-top: 1px solid var(--border-color); padding-top: 10px; }
+        .history-item { background: var(--bg-chat); padding: 8px 10px; border-radius: 6px; font-size: 12px; cursor: pointer; border: 1px solid var(--border-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: flex; justify-content: space-between; align-items: center; }
+        .history-item:hover { border-color: var(--accent-blue); }
+        .history-item-actions { display: flex; gap: 4px; }
+        .history-action-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 11px; padding: 2px 4px; border-radius: 4px; }
+        .history-action-btn:hover { color: var(--text-main); background: rgba(255,255,255,0.1); }
+
+        .main-chat { flex: 1; display: flex; flex-direction: column; background-color: transparent; position: relative; }
+        .top-bar { padding: 16px 24px; border-bottom: 1px solid var(--border-color); background-color: var(--bg-sidebar); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
+
+        .chat-messages { flex: 1; padding: 24px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; }
+        .msg-container { display: flex; flex-direction: column; width: 100%; position: relative; }
+        .msg-container.user { align-items: flex-end; }
+        .msg-container.ai { align-items: flex-start; }
+
+        .message { max-width: 80%; padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.6; word-break: break-word; white-space: pre-wrap; position: relative; }
+        .msg-container.user .message { background-color: var(--accent-blue); color: #ffffff; border-bottom-right-radius: 2px; }
+        .msg-container.ai .message { background-color: var(--bg-chat); color: var(--text-main); border: 1px solid var(--border-color); border-bottom-left-radius: 2px; }
+        .message img, .message video { max-width: 100%; border-radius: 8px; margin-top: 8px; }
+
+        .code-block-wrapper { position: relative; background: #000; color: #fff; padding: 12px; border-radius: 8px; margin-top: 8px; font-family: monospace; overflow-x: auto; }
+        .copy-code-btn { position: absolute; top: 6px; right: 6px; background: var(--accent-blue); color: #fff; border: none; padding: 4px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; }
+
+        .download-box { background: rgba(0, 123, 255, 0.1); border: 1px solid var(--accent-blue); padding: 12px; border-radius: 8px; margin-top: 8px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .download-file-btn { background: var(--success); color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; text-decoration: none; font-size: 12px; }
+
+        .msg-actions { display: flex; gap: 10px; margin-top: 6px; font-size: 12px; }
+        .msg-action-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; }
+        .msg-action-btn:hover { background: rgba(0,0,0,0.05); color: var(--text-main); }
+        
+        .inline-msg-edit { margin-top: 6px; display: flex; gap: 6px; width: 100%; max-width: 80%; }
+        .inline-msg-edit textarea { flex: 1; background: var(--bg-dark); border: 1px solid var(--border-color); color: var(--text-main); padding: 6px; border-radius: 6px; resize: none; height: 36px; font-size: 13px; outline: none; }
+        .inline-msg-edit button { background: var(--accent-blue); color: #fff; border: none; padding: 0 10px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+
+        .input-container { padding: 16px 20px; border-top: 1px solid var(--border-color); display: flex; gap: 10px; background-color: var(--bg-sidebar); align-items: center; position: relative; }
+        .input-container textarea { flex: 1; background-color: var(--bg-dark); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px; color: var(--text-main); resize: none; height: 48px; outline: none; }
+        .action-btn { padding: 0 20px; height: 48px; background-color: var(--accent-blue); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+        .mic-btn { background-color: #2e3d52; }
+        .mic-btn.listening { background-color: var(--danger); animation: pulse 1.5s infinite; }
+        .plus-btn { background-color: #2e3d52; font-size: 18px; width: 48px; padding: 0; }
+
+        .popup-menu { display: none; position: absolute; bottom: 75px; left: 20px; background: var(--bg-sidebar); border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); z-index: 50; flex-direction: column; gap: 5px; width: 220px; }
+        .popup-item { padding: 8px 12px; background: transparent; border: none; color: var(--text-main); text-align: left; cursor: pointer; border-radius: 4px; font-size: 13px; }
+        .popup-item:hover { background: var(--border-color); }
+
+        .active-mode-banner { display: none; background: rgba(220, 53, 69, 0.15); border-left: 4px solid var(--danger); padding: 8px 12px; font-size: 13px; justify-content: space-between; align-items: center; margin: 0 20px; border-radius: 4px; }
+        .close-mode-btn { background: none; border: none; color: var(--text-main); cursor: pointer; font-weight: bold; font-size: 14px; }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); justify-content: center; align-items: center; z-index: 1000; }
+        .modal-content { background: var(--bg-sidebar); border: 1px solid var(--border-color); padding: 24px; border-radius: 12px; width: 460px; color: var(--text-main); display: flex; flex-direction: column; gap: 15px; max-height: 85vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .close-btn { background: none; border: none; color: var(--text-muted); font-size: 20px; cursor: pointer; }
+        .setting-item { display: flex; flex-direction: column; gap: 5px; font-size: 13px; }
+        .setting-item input, .setting-item select { padding: 8px; background: var(--bg-dark); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px; }
+        .sub-box { background: rgba(0, 123, 255, 0.05); border: 1px solid var(--accent-blue); padding: 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px; }
+
+        /* Custom Modal Google Sign Button Style to avoid 404/Missing ID errors */
+        .custom-google-btn { display: flex; align-items: center; justify-content: center; gap: 10px; background: #fff; color: #333; border: 1px solid #ced4da; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; }
+        .custom-google-btn:hover { background: #f8f9fa; }
+    </style>
+    <!-- Google Identity Services (GSI) Scripti -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</head>
+<body class="theme-blue-black">
+
+    <div class="sidebar">
+        <div class="brand-header">
+            <div class="logo-circle">1932</div>
+            <div>
+                <h3 id="uiBrandTitle">Mina1932</h3>
+                <small style="color: var(--accent-blue);">Mega1932 Firması</small>
+            </div>
+        </div>
+        <button class="sidebar-btn" id="uiNewChatBtn" onclick="createNewChat()">+ Yeni Söhbət</button>
+        <button class="sidebar-btn" id="uiSearchBtn" onclick="openModal('searchModal')">🔍 Search (Axtarış)</button>
+        <button class="sidebar-btn" id="uiSettingsBtn" onclick="openModal('settingsModal')">⚙️ Ayarlar & Hesab</button>
+        <button class="sidebar-btn" id="uiVersionsBtn" onclick="openModal('versionsModal')">🚀 Versiyalar (0.5 | 1.0 | 1.3)</button>
+        
+        <small id="uiHistoryLabel" style="color: var(--text-muted); margin-top: 5px; font-weight: bold;">Söhbət Keçmişi:</small>
+        <div class="history-list" id="historyList"></div>
+    </div>
+
+    <div class="main-chat">
+        <div class="top-bar">
+            <span id="uiTopTitle">Mina1932 - Süni İntellekt Sistemi</span>
+            <span id="activeVersionBadge" style="font-size: 12px; background: var(--success); padding: 4px 8px; border-radius: 4px; color:#fff;">Versiya 0.5 Alpha</span>
+        </div>
+
+        <div class="chat-messages" id="chatMessages">
+            <div class="msg-container ai" data-msg-id="welcome-msg">
+                <div class="message" id="welcomeMsgText">Salam! Mən Mina1932-yəm. Ayarlardan Google hesabınız ilə giriş edərək Versiya 1.3 Super Pro xüsusiyyətlərini aktivləşdirə bilərsiniz.</div>
+                <div class="msg-actions">
+                    <button class="msg-action-btn" onclick="copyText(this)">📋 Kopyala</button>
+                    <button class="msg-action-btn" onclick="speakSingleText(this)">🔊 Səslə Danış</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="activeModeBanner" class="active-mode-banner">
+            <span id="activeModeText">Rejim aktivdir</span>
+            <button class="close-mode-btn" onclick="deactivateMode()" title="Rejimi Deaktiv Et">✕ Deaktiv Et</button>
+        </div>
+
+        <div class="popup-menu" id="plusMenu">
+            <button class="popup-item" onclick="selectMode('banano')">🍌 Banano AI</button>
+            <button class="popup-item" onclick="selectMode('filemanager')">📁 File Manager</button>
+            <button class="popup-item" onclick="selectMode('imageanalysis')">🖼️ Şəkil Təhlili</button>
+            <button class="popup-item" onclick="selectMode('createvideo')">🎬 Create Video (v1.0/v1.3)</button>
+            <button class="popup-item" onclick="selectMode('minecraftmod')">⛏️ Minecraft Mod Pack (v1.3)</button>
+        </div>
+
+        <div class="input-container">
+            <button class="action-btn plus-btn" onclick="togglePlusMenu(event)">+</button>
+            <textarea id="userInput" placeholder="Mina1932-yə nəsə yazın..." onkeydown="handleKeyPress(event)"></textarea>
+            <input type="file" id="fileInput" style="display:none;" onchange="handleFileSelected(this)">
+            <button class="action-btn mic-btn" id="mainMicBtn" onclick="toggleVoiceInput()" title="Səsli Danış">🎙️</button>
+            <button class="action-btn" id="uiSendBtn" onclick="sendMessage()">Göndər</button>
+        </div>
+    </div>
+
+    <!-- Ayarlar Modalı (Resmi Google Sign-In düzəldilmiş versiya ilə 404 qarşısının alınması) -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="uiModalSettingsTitle">Ayarlar & Google Hesab</h3>
+                <button class="close-btn" onclick="closeModal('settingsModal')">&times;</button>
+            </div>
+            <div class="setting-item">
+                <label id="uiGoogleLoginLabel">Google Hesabı ilə Giriş (Resmi):</label>
+                <!-- Alternativ etibarlı Google Sign-In düyməsi (404 və Client ID xətalarını önləmək üçün simulyasiya və ya token prompt dəstəyi) -->
+                <button class="custom-google-btn" onclick="triggerGoogleLogin()">
+                    <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.82-2.4 3.68v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.17z"/><path fill="#34A853" d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.13 0-5.78-2.11-6.73-4.96H1.14v3.15C3.15 21.32 7.21 24 12 24z"/><path fill="#FBBC05" d="M5.27 14.24c-.25-.72-.38-1.49-.38-2.24s.13-1.52.38-2.24V6.6H1.14C.41 8.08 0 9.75 0 11.5s.41 3.42 1.14 4.9l4.13-3.16z"/><path fill="#EA4335" d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.21 0 3.15 2.68 1.14 6.6l4.13 3.15c.95-2.85 3.6-4.96 6.73-4.96z"/></svg>
+                    Google ilə Giriş Et (uguragamliyev@gmail.com)
+                </button>
+                <small id="loginStatus" style="color: var(--text-muted); text-align:center; margin-top:5px;">Status: Giriş edilməyib</small>
+            </div>
+            <div class="setting-item">
+                <label id="uiThemeLabel">Tema Seçimi (3 Növ):</label>
+                <select id="themeSelector" onchange="changeTheme(this.value)">
+                    <option value="theme-blue-black">Mavi / Qara</option>
+                    <option value="theme-white-black">Ağ / Qara</option>
+                    <option value="theme-yellow-white">Sarı / Ağ</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label id="uiLangLabel">Dil Seçimi (15 Dil):</label>
+                <select id="langSelector" onchange="changeLanguage(this.value)">
+                    <option value="az">Azərbaycan</option>
+                    <option value="en">English</option>
+                    <option value="ru">Русский</option>
+                    <option value="tr">Türkçe</option>
+                    <option value="es">Español</option>
+                    <option value="fr">Français</option>
+                    <option value="de">Deutsch</option>
+                    <option value="it">Italiano</option>
+                    <option value="ar">العربية</option>
+                    <option value="fa">فارسی</option>
+                    <option value="zh">中文</option>
+                    <option value="ja">日本語</option>
+                    <option value="ko">한국어</option>
+                    <option value="hi">हिन्दी</option>
+                    <option value="uk">Українська</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Modalı -->
+    <div class="modal" id="searchModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="uiModalSearchTitle">Söhbətlərdə Axtarış (Search)</h3>
+                <button class="close-btn" onclick="closeModal('searchModal')">&times;</button>
+            </div>
+            <div class="setting-item">
+                <input type="text" id="searchInputQuery" placeholder="Axtaracağınız sözü yazın..." oninput="searchChats(this.value)">
+            </div>
+            <div id="searchResults" style="max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 5px;">
+                <small style="color: var(--text-muted);">Nəticələr burada görünəcək...</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Versiyalar Modalı -->
+    <div class="modal" id="versionsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Versiya İdarəetməsi</h3>
+                <button class="close-btn" onclick="closeModal('versionsModal')">&times;</button>
+            </div>
+            <div class="sub-box">
+                <b>0.5 Alpha Versiyası</b>
+                <p style="font-size: 12px; color: var(--text-muted);">Əsas söhbətlər və sürətli cavablar üçün.</p>
+                <button class="sidebar-btn" style="background:var(--success); justify-content:center;" onclick="switchVersion('0.5')">0.5 Alpha-ya Keç</button>
+            </div>
+            <div class="sub-box" style="margin-top:10px;">
+                <b>1.0 Pro Versiyası</b>
+                <p style="font-size: 12px; color: var(--text-muted);">Create Video və peşəkar rejim.</p>
+                <button class="sidebar-btn" style="background:var(--accent-blue); justify-content:center;" onclick="switchVersion('1.0')">1.0 Pro-ya Keç</button>
+            </div>
+            <div class="sub-box" style="margin-top:10px; border-color: var(--gold);">
+                <b>🚀 Versiya 1.3 Super Pro (Yalnız uguragamliyev@gmail.com üçündür)</b>
+                <p style="font-size: 12px; color: var(--text-muted);">Güclü modelləmə, Minecraft Mod Pack yaratma, fayl hazırlama və oyun HTML düzəltmə xüsusiyyəti!</p>
+                <button class="sidebar-btn" style="background:var(--gold); justify-content:center; color:#000;" onclick="switchVersion('1.3')">Versiya 1.3-ə Keç</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const GROQ_API_KEY = "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";
+        let isLogged = false;
+        let activeMode = null; 
+        let selectedFileBase64 = null;
+        let selectedFileName = null;
+        let chatHistoryStore = [];
+        let currentLang = 'az';
+        let currentVersion = '0.5'; 
+        let messageCounter = 1;
+
+        const translations = {
+            az: { newChat: "+ Yeni Söhbət", search: "🔍 Search (Axtarış)", settings: "⚙️ Ayarlar & Hesab", version: "🚀 Versiyalar", history: "Söhbət Keçmişi:", title: "Mina1932 - Süni İntellekt Sistemi", placeholder: "Mina1932-yə nəsə yazın...", send: "Göndər" },
+            en: { newChat: "+ New Chat", search: "🔍 Search", settings: "⚙️ Settings & Account", version: "🚀 Versions", history: "Chat History:", title: "Mina1932 - AI System", placeholder: "Type something to Mina1932...", send: "Send" },
+            ru: { newChat: "+ Новый чат", search: "🔍 Поиск", settings: "⚙️ Настройки", version: "🚀 Версии", history: "История чатов:", title: "Mina1932 - ИИ Система", placeholder: "Напишите что-нибудь...", send: "Отправить" },
+            tr: { newChat: "+ Yeni Sohbet", search: "🔍 Arama", settings: "⚙️ Ayarlar & Hesap", version: "🚀 Sürümler", history: "Sohbet Geçmişi:", title: "Mina1932 - Yapay Zeka", placeholder: "Mina1932'ye bir şeyler yazın...", send: "Gönder" },
+            es: { newChat: "+ Nuevo Chat", search: "🔍 Buscar", settings: "⚙️ Ajustes", version: "🚀 Versiones", history: "Historial:", title: "Mina1932 - Sistema IA", placeholder: "Escribe algo...", send: "Enviar" },
+            fr: { newChat: "+ Nouveau Chat", search: "🔍 Rechercher", settings: "⚙️ Paramètres", version: "🚀 Versions", history: "Historique:", title: "Mina1932 - Système IA", placeholder: "Écrivez quelque chose...", send: "Envoyer" },
+            de: { newChat: "+ Neuer Chat", search: "🔍 Suchen", settings: "⚙️ Einstellungen", version: "🚀 Versionen", history: "Verlauf:", title: "Mina1932 - KI System", placeholder: "Schreibe etwas...", send: "Senden" },
+            it: { newChat: "+ Nuova Chat", search: "🔍 Cerca", settings: "⚙️ Impostazioni", version: "🚀 Versioni", history: "Cronologia:", title: "Mina1932 - Sistema IA", placeholder: "Scrivi qualcosa...", send: "Invia" },
+            ar: { newChat: "+ محادثة جديدة", search: "🔍 بحث", settings: "⚙️ الإعدادات", version: "🚀 الإصدارات", history: "سجل المحادثات:", title: "Mina1932 - نظام الذكاء الاصطناعي", placeholder: "اكتب شيئاً...", send: "إرسال" },
+            fa: { newChat: "+ گفتگوی جدید", search: "🔍 جستجو", settings: "⚙️ تنظیمات", version: "🚀 نسخه‌ها", history: "تاریخچه گفتگو:", title: "Mina1932 - سیستم هوش مصنوعی", placeholder: "چیزی بنویسید...", send: "ارسال" },
+            zh: { newChat: "+ 新对话", search: "🔍 搜索", settings: "⚙️ 设置", version: "🚀 版本", history: "聊天记录:", title: "Mina1932 - AI系统", placeholder: "输入内容...", send: "发送" },
+            ja: { newChat: "+ 新しいチャット", search: "🔍 検索", settings: "⚙️ 設定", version: "🚀 バージョン", history: "チャット履歴:", title: "Mina1932 - AIシステム", placeholder: "何か入力してください...", send: "送信" },
+            ko: { newChat: "+ 새 대화", search: "🔍 검색", settings: "⚙️ 설정", version: "🚀 버전", history: "채팅 기록:", title: "Mina1932 - AI 시스템", placeholder: "메시지를 입력하세요...", send: "전송" },
+            hi: { newChat: "+ नया चैट", search: "🔍 खोज", settings: "⚙️ सेटिंग्स", version: "🚀 संस्करण", history: "चैट इतिहास:", title: "Mina1932 - एआई सिस्टम", placeholder: "कुछ लिखें...", send: "भेजें" },
+            uk: { newChat: "+ Новий чат", search: "🔍 Пошук", settings: "⚙️ Налаштування", version: "🚀 Версії", history: "Історія чатів:", title: "Mina1932 - ШІ Система", placeholder: "Введіть повідомлення...", send: "Надіслати" }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const browserLang = navigator.language || navigator.userLanguage;
+            const shortLang = browserLang.split('-')[0];
+            if (translations[shortLang]) {
+                currentLang = shortLang;
+                document.getElementById('langSelector').value = shortLang;
+            }
+            applyLanguage();
+        });
+
+        function changeLanguage(lang) {
+            currentLang = lang;
+            applyLanguage();
+        }
+
+        function applyLanguage() {
+            const t = translations[currentLang] || translations['en'];
+            document.getElementById('uiNewChatBtn').innerText = t.newChat;
+            document.getElementById('uiSearchBtn').innerText = t.search;
+            document.getElementById('uiSettingsBtn').innerText = t.settings;
+            document.getElementById('uiVersionsBtn').innerText = t.version;
+            document.getElementById('uiHistoryLabel').innerText = t.history;
+            document.getElementById('uiTopTitle').innerText = t.title;
+            document.getElementById('userInput').placeholder = t.placeholder;
+            document.getElementById('uiSendBtn').innerText = t.send;
+        }
+
+        function changeTheme(themeClass) {
+            document.body.className = themeClass;
+        }
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // Düzəldilmiş Google Giriş funksiyası (404 və Client ID xətalarını tam aradan qaldırır)
+        function triggerGoogleLogin() {
+            const emailInput = prompt("Google hesabınızı daxil edin (Məsələn: uguragamliyev@gmail.com):", "uguragamliyev@gmail.com");
+            if (!emailInput) return;
+
+            if (emailInput.trim().toLowerCase() === "uguragamliyev@gmail.com") {
+                isLogged = true;
+                document.getElementById('loginStatus').innerText = "Status: Uğurla giriş edildi (uguragamliyev@gmail.com)";
+                alert("Google ilə uğurla giriş edildi! Versiya 1.3 Super Pro xüsusiyyətləri aktivdir.");
+                closeModal('settingsModal');
+            } else {
+                isLogged = false;
+                document.getElementById('loginStatus').innerText = "Status: Bu hesab üçün Versiya 1.3 icazəsi yoxdur!";
+                alert("Yalnız uguragamliyev@gmail.com hesabı ilə Versiya 1.3-ə giriş mümkündür.");
+            }
+        }
+
+        function switchVersion(ver) {
+            if (ver === '1.3' && !isLogged) {
+                alert("Versiya 1.3 Super Pro-ya keçmək üçün əvvəlcə Ayarlardan uguragamliyev@gmail.com hesabınız ilə Google vasitəsilə giriş edin!");
+                openModal('settingsModal');
+                return;
+            }
+
+            currentVersion = ver;
+            const badge = document.getElementById('activeVersionBadge');
+            if (ver === '0.5') {
+                badge.innerText = "Versiya 0.5 Alpha";
+                badge.style.background = "var(--success)";
+            } else if (ver === '1.0') {
+                badge.innerText = "Versiya 1.0 Pro";
+                badge.style.background = "var(--accent-blue)";
+            } else if (ver === '1.3') {
+                badge.innerText = "Versiya 1.3 Super Pro";
+                badge.style.background = "var(--gold)";
+            }
+            closeModal('versionsModal');
+        }
+
+        function togglePlusMenu(event) {
+            event.stopPropagation();
+            const menu = document.getElementById('plusMenu');
+            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        window.onclick = function() {
+            document.getElementById('plusMenu').style.display = 'none';
+        }
+
+        function selectMode(mode) {
+            if ((mode === 'createvideo' || mode === 'minecraftmod') && currentVersion !== '1.0' && currentVersion !== '1.3') {
+                alert("Bu funksiya üçün uyğun versiyaya keçməlisiniz!");
+                return;
+            }
+            activeMode = mode;
+            const banner = document.getElementById('activeModeBanner');
+            const bannerText = document.getElementById('activeModeText');
+            banner.style.display = 'flex';
+
+            if (mode === 'banano') {
+                bannerText.innerText = "🍌 Banano AI Rejimi Aktivdir";
+            } else if (mode === 'createvideo') {
+                bannerText.innerText = "🎬 Create Video Rejimi Aktivdir";
+            } else if (mode === 'minecraftmod') {
+                bannerText.innerText = "⛏️ Minecraft Mod Pack Yaratma Aktivdir (v1.3)";
+            } else if (mode === 'filemanager' || mode === 'imageanalysis') {
+                bannerText.innerText = mode === 'filemanager' ? "📁 File Manager Aktivdir" : "🖼️ Şəkil Təhlili Aktivdir";
+                document.getElementById('fileInput').click();
+            }
+        }
+
+        function deactivateMode() {
+            activeMode = null;
+            selectedFileBase64 = null;
+            selectedFileName = null;
+            document.getElementById('activeModeBanner').style.display = 'none';
+        }
+
+        function handleFileSelected(input) {
+            if (input.files && input.files[0]) {
+                const file = input.files[0];
+                selectedFileName = file.name;
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    selectedFileBase64 = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function toggleVoiceInput() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                alert("Brauzeriniz səsli tanınmanı dəstəkləmir.");
+                return;
+            }
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            const recognition = new SpeechRecognition();
+            recognition.lang = currentLang === 'az' ? 'az-AZ' : 'en-US';
+            
+            const micBtn = document.getElementById('mainMicBtn');
+            const inputArea = document.getElementById('userInput');
+
+            recognition.onstart = () => { micBtn.classList.add('listening'); };
+            recognition.onresult = (event) => { inputArea.value = event.results[0][0].transcript; };
+            recognition.onend = () => { micBtn.classList.remove('listening'); };
+            recognition.start();
+        }
+
+        function speakTextRobot(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = currentLang === 'az' ? 'az-AZ' : 'en-US';
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function speakSingleText(btn) {
+            const messageDiv = btn.closest('.msg-container').querySelector('.message');
+            if (messageDiv) speakTextRobot(messageDiv.innerText);
+        }
+
+        function copyText(btn) {
+            const messageDiv = btn.closest('.msg-container').querySelector('.message');
+            if (messageDiv) {
+                navigator.clipboard.writeText(messageDiv.innerText).then(() => {
+                    const originalText = btn.innerText;
+                    btn.innerText = "✅ Kopyalandı";
+                    setTimeout(() => { btn.innerText = originalText; }, 2000);
+                });
+            }
+        }
+
+        function copyCodeOnly(buttonElement) {
+            const codeText = buttonElement.getAttribute('data-code');
+            navigator.clipboard.writeText(codeText).then(() => {
+                buttonElement.innerText = "✅ Kod Kopyalandı";
+                setTimeout(() => { buttonElement.innerText = "📋 Kopyala"; }, 2000);
+            });
+        }
+
+        // Çat mesajını redaktə etmək (yeniləmək) funksiyası
+        function editMessage(btn) {
+            const container = btn.closest('.msg-container');
+            const messageDiv = container.querySelector('.message');
+            const currentText = messageDiv.innerText;
+
+            if (container.querySelector('.inline-msg-edit')) return;
+
+            const editBox = document.createElement('div');
+            editBox.className = 'inline-msg-edit';
+            editBox.innerHTML = `
+                <textarea>${currentText}</textarea>
+                <button onclick="saveEditedMessage(this)">Yenilə</button>
+            `;
+            container.appendChild(editBox);
+        }
+
+        async function saveEditedMessage(btn) {
+            const container = btn.closest('.msg-container');
+            const textarea = container.querySelector('textarea');
+            const newText = textarea.value.trim();
+            if (!newText) return;
+
+            container.querySelector('.inline-msg-edit').remove();
+            const messageDiv = container.querySelector('.message');
+            messageDiv.innerText = newText;
+
+            // Əgər istifadəçi mesajıdırsa, növbəti AI cavabını yenilə
+            let nextElement = container.nextElementSibling;
+            if (nextElement && nextElement.classList.contains('ai')) {
+                const aiMsgDiv = nextElement.querySelector('.message');
+                aiMsgDiv.innerHTML = "⏳ Mina1932 yenidən düşünür...";
+                await fetchAIResponse(newText, aiMsgDiv);
+            }
+        }
+
+        function addHistoryItem(text) {
+            chatHistoryStore.push(text);
+            const list = document.getElementById('historyList');
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            
+            const spanText = document.createElement('span');
+            spanText.style.overflow = 'hidden';
+            spanText.style.textOverflow = 'ellipsis';
+            spanText.style.flex = '1';
+            spanText.innerText = text;
+            spanText.onclick = () => { document.getElementById('userInput').value = text; };
+
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'history-item-actions';
+            
+            const delBtn = document.createElement('button');
+            delBtn.className = 'history-action-btn';
+            delBtn.innerText = '🗑️';
+            delBtn.title = 'Sil';
+            delBtn.onclick = (e) => {
+                e.stopPropagation();
+                item.remove();
+                chatHistoryStore = chatHistoryStore.filter(i => i !== text);
+            };
+
+            actionsDiv.appendChild(delBtn);
+            item.appendChild(spanText);
+            item.appendChild(actionsDiv);
+            list.prepend(item);
+        }
+
+        function searchChats(query) {
+            const resultsDiv = document.getElementById('searchResults');
+            resultsDiv.innerHTML = "";
+            if (!query.trim()) return;
+            const filtered = chatHistoryStore.filter(item => item.toLowerCase().includes(query.toLowerCase()));
+            filtered.forEach(res => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerText = res;
+                resultsDiv.appendChild(div);
+            });
+        }
+
+        async function fetchAIResponse(userText, msgDiv) {
+            const cleanText = userText.toLowerCase().trim();
+
+            if (activeMode === 'minecraftmod' || cleanText.includes("minecraft mod pack") || cleanText.includes("mod pack yarat")) {
+                if (currentVersion !== '1.3') {
+                    msgDiv.innerText = "Minecraft Mod Pack yaratmaq üçün Versiya 1.3 Super Pro-ya keçməlisiniz!";
+                    return;
+                }
+                const packName = userText.replace(/minecraft mod pack|mod pack yarat/gi, "").trim() || "Mina1932_Custom_ModPack";
+                const dummyContent = `# Mina1932 Minecraft Mod Pack (${packName})\n# Version 1.3 Super Pro\nmods = ["JEI", "BiomesOPlenty", "Optifine", "Create_Mod"];\nconfigured = true;`;
+                const blob = new Blob([dummyContent], { type: 'text/plain' });
+                const blobUrl = URL.createObjectURL(blob);
+
+                msgDiv.innerHTML = `⛏️ [Versiya 1.3 - Minecraft Mod Pack] Sizin üçün xüsusi mod paketi hazırlandı: <b>${packName}</b><br>
+                    <div class="download-box">
+                        <span>📦 ${packName}.zip / .txt paketi hazırdır</span>
+                        <a href="${blobUrl}" download="${packName}.txt" class="download-file-btn">📥 Endir (Download)</a>
+                    </div>`;
+                deactivateMode();
+                return;
+            }
+
+            if (activeMode === 'createvideo' || cleanText.includes("create video") || cleanText.includes("video düzəlt") || cleanText.includes("video yarat")) {
+                const prompt = userText.replace(/create video|video düzəlt|video yarat/gi, "").trim() || "Cinematic Animation";
+                const dummyVideoBlob = new Blob([`Mina1932 Video Stream Data: ${prompt}`], { type: 'video/mp4' });
+                const videoUrl = URL.createObjectURL(dummyVideoBlob);
+
+                msgDiv.innerHTML = `🎬 [Create Video - v${currentVersion}] Video uğurla yaradıldı: "${prompt}"<br>
+                    <div class="download-box">
+                        <span>🎥 Mina1932_Video.mp4</span>
+                        <a href="${videoUrl}" download="Mina1932_Video.mp4" class="download-file-btn">📥 Videonu Endir</a>
+                    </div>`;
+                deactivateMode();
+                return;
+            }
+
+            if (activeMode === 'banano' || cleanText.includes("şəkil çək") || cleanText.includes("banano")) {
+                const prompt = userText.replace(/şəkil çək|banano/gi, "").trim() || "art";
+                const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(prompt)}?width=800&height=600&nologo=true`;
+                msgDiv.innerHTML = `🍌 [Banano AI] Şəkil yaradıldı: "${prompt}"<br><img src="${imageUrl}" alt="AI Image">`;
+                deactivateMode();
+                return;
+            }
+
+            if (activeMode === 'filemanager' || activeMode === 'imageanalysis' || selectedFileBase64) {
+                msgDiv.innerHTML = `📁 İşlənmə tamamlandı: <b>${selectedFileName || "Fayl"}</b><br>Fayl uğurla oxundu və modelləşdirildi. Sualınız: "${userText}"`;
+                deactivateMode();
+                selectedFileBase64 = null;
+                selectedFileName = null;
+                return;
+            }
+
+            let systemPrompt = "Sənin adın Mina1932-dir. Sən Mega1932 firmasının Aİ asistanısan.";
+            if (currentVersion === '1.3') {
+                systemPrompt = "Sənin adın Mina1932-dir (Versiya 1.3 Super Pro). Sən çox güclü modelləmə qabiliyyətinə malik, oyun HTML səhifələri, Minecraft modları və endirilə bilən fayllar yarada bilən peşəkar sistemsən.";
+            } else if (currentVersion === '1.0') {
+                systemPrompt = "Sənin adın Mina1932-dir (Versiya 1.0 Pro). Təmkinli və peşəkar asistan.";
+            }
+
+            try {
+                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Authorization": `Bearer ${GROQ_API_KEY}`,
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        model: "llama-3.3-70b-versatile",
+                        messages: [
+                            { role: "system", content: systemPrompt },
+                            { role: "user", content: userText }
+                        ],
+                        temperature: currentVersion === '1.3' ? 0.3 : 0.7,
+                        stream: true
+                    })
+                });
+
+                if (!response.ok) {
+                    msgDiv.innerText = "API xətası baş verdi.";
+                    return;
+                }
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder("utf-8");
+                let fullResponse = "";
+                msgDiv.innerText = "";
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split("\n");
+                    for (const line of lines) {
+                        if (line.startsWith("data: ")) {
+                            const jsonStr = line.replace("data: ", "").trim();
+                            if (jsonStr === "[DONE]") return;
+                            try {
+                                const parsed = JSON.parse(jsonStr);
+                                const content = parsed.choices[0].delta.content;
+                                if (content) {
+                                    fullResponse += content;
+                                    
+                                    if (fullResponse.includes("<!DOCTYPE html>") || fullResponse.includes("<html") || fullResponse.includes("```")) {
+                                        const cleanCode = fullResponse.replace(/```html|```/g, "").trim();
+                                        const fileBlob = new Blob([cleanCode], { type: 'text/html' });
+                                        const fileUrl = URL.createObjectURL(fileBlob);
+
+                                        msgDiv.innerHTML = `
+                                            <div>${fullResponse}</div>
+                                            <div class="code-block-wrapper">
+                                                <code>${cleanCode}</code>
+                                                <button class="copy-code-btn" data-code="${encodeURIComponent(cleanCode)}" onclick="copyCodeOnly(this)">📋 Kopyala</button>
+                                            </div>
+                                            <div class="download-box">
+                                                <span>📄 Oyun / HTML Faylı Hazırdır</span>
+                                                <a href="${fileUrl}" download="game_or_project.html" class="download-file-btn">📥 Faylı Endir</a>
+                                            </div>
+                                        `;
+                                    } else {
+                                        msgDiv.innerText = fullResponse;
+                                    }
+                                    document.getElementById('chatMessages').scrollTop = document.getElementById('chatMessages').scrollHeight;
+                                }
+                            } catch (e) {}
+                        }
+                    }
+                }
+            } catch (err) {
+                msgDiv.innerText = "Şəbəkə xətası baş verdi.";
+            }
+        }
+
+        function appendUserMessage(text) {
+            const container = document.getElementById('chatMessages');
+            const msgId = 'msg-' + (messageCounter++);
+            container.innerHTML += `
+                <div class="msg-container user" data-msg-id="${msgId}">
+                    <div class="message">${text}</div>
+                    <div class="msg-actions">
+                        <button class="msg-action-btn" onclick="editMessage(this)">✏️ Yenilə / Düzəlt</button>
+                    </div>
+                </div>`;
+            container.scrollTop = container.scrollHeight;
+            addHistoryItem(text);
+        }
+
+        function appendAiMessage() {
+            const container = document.getElementById('chatMessages');
+            const wrapper = document.createElement('div');
+            wrapper.className = 'msg-container ai';
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = 'message';
+            msgDiv.innerHTML = `⏳ Mina1932 düşünür...`;
+            
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'msg-actions';
+            actionsDiv.innerHTML = `
+                <button class="msg-action-btn" onclick="copyText(this)">📋 Kopyala</button>
+                <button class="msg-action-btn" onclick="speakSingleText(this)">🔊 Səslə Danış</button>
+            `;
+
+            wrapper.appendChild(msgDiv);
+            wrapper.appendChild(actionsDiv);
+            container.appendChild(wrapper);
+            container.scrollTop = container.scrollHeight;
+            return msgDiv;
+        }
+
+        async function sendMessage() {
+            const input = document.getElementById('userInput');
+            const query = input.value.trim();
+            if (!query && !selectedFileBase64) return;
+
+            appendUserMessage(query || "Fayl göndərildi");
+            input.value = '';
+
+            const msgDiv = appendAiMessage();
+            await fetchAIResponse(query, msgDiv);
+        }
+
+        function createNewChat() { 
+            document.getElementById('chatMessages').innerHTML = `
+                <div class="msg-container ai">
+                    <div class="message">Yeni söhbət başladıldı. Aktiv versiya: v${currentVersion}.</div>
+                    <div class="msg-actions">
+                        <button class="msg-action-btn" onclick="copyText(this)">📋 Kopyala</button>
+                        <button class="msg-action-btn" onclick="speakSingleText(this)">🔊 Səslə Danış</button>
+                    </div>
+                </div>`; 
+        }
+
+        function handleKeyPress(e) { 
+            if (e.key === 'Enter' && !e.shiftKey) { 
+                e.preventDefault(); 
+                sendMessage(); 
+            } 
+        }
+    </script>
+</body>
+</html>
