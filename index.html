@@ -188,7 +188,7 @@
 1. 🧠 **Memory Fixed:** System now Remembers full conversation context!
 2. 🎵 **Music32 Sound Synth:** Built-in Web Audio Synthesizer!
 3. 🔑 **Official Google Sign-In Integrated:** Use official Google button to login!
-4. 🖼️ **Advanced Image & Video AI:** High-precision Image Generator and Video Creator.
+4. 🖼️ **Advanced Replicate Image Editing AI:** Upload an image and instruct Mina to edit it!
 5. 🌸 **Pink-White Theme Available!**</div>
                 <div class="msg-actions">
                     <button class="msg-action-btn" onclick="copyText(this)">📋 Copy</button>
@@ -291,7 +291,6 @@
             <div class="setting-item">
                 <label id="uiGoogleLoginLabel">Google Account Sign-In:</label>
                 
-                <!-- Official Google Sign-In Button Container -->
                 <div id="googleBtnWrapper" class="google-btn-container">
                     <div id="g_id_onload"
                          data-client_id="581461759493-05t9uccc616b66ap41sgukna56a370t7.apps.googleusercontent.com"
@@ -383,6 +382,8 @@
 
     <script>
         const GROQ_API_KEY = "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";
+        const REPLICATE_API_KEY = "r8_IBalvYpUN8DjdxImUaPWPfh6JXWvIEb37DipC";
+
         let isLogged = false;
         let isVip = false;
         let currentUserEmail = "";
@@ -429,7 +430,6 @@
             updatePrices();
         });
 
-        // Official Google Callback Function
         function handleCredentialResponse(response) {
             try {
                 const base64Url = response.credential.split('.')[1];
@@ -518,7 +518,7 @@
             const txt = document.getElementById('activeModeText');
             banner.style.display = 'flex';
 
-            if (mode === 'banano') txt.innerText = "🍌 Advanced Image Generator Mode Active";
+            if (mode === 'banano') txt.innerText = "🍌 Advanced Image Generator & Editor Active";
             else if (mode === 'createvideo') txt.innerText = "🎬 Video Generator AI Mode Active";
             else if (mode === 'music32') txt.innerText = "🎵 Music32 Web Audio Sound Synthesizer Active";
         }
@@ -541,14 +541,14 @@
             isImageFile = file.type.startsWith('image/');
 
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = function (e) {
                 selectedFileBase64 = e.target.result;
                 if (isImageFile) {
                     document.getElementById('previewImgThumb').src = selectedFileBase64;
                     document.getElementById('previewImgName').innerText = selectedFileName;
                     document.getElementById('imagePreviewBar').style.display = 'flex';
                 } else {
-                    alert(`Selected file: ${file.name}`);
+                    alert(`File loaded: ${selectedFileName}`);
                 }
             };
             reader.readAsDataURL(file);
@@ -569,295 +569,200 @@
             }
         }
 
-        function updatePrices() {
-            selectedCurrency = document.getElementById('currencySelector').value;
-            const c = currencyRates[selectedCurrency];
-            const p1 = Math.round(5 * c.rate);
-            const p2 = Math.round(15 * c.rate);
+async function sendMessage() {
+    const inputEl = document.getElementById('userInput');
+    const text = inputEl.value.trim();
 
-            document.getElementById('plan1Title').innerText = `⚡ PRO Monthly Plan - ${p1} ${c.symbol}`;
-            document.getElementById('plan2Title').innerText = `🚀 VIP ULTRA Lifetime Plan - ${p2} ${c.symbol}`;
-        }
+    if (!text && !selectedFileBase64) return;
 
-        function selectPlan(id, baseUSD) {
-            planBaseUSD = baseUSD;
-            document.querySelectorAll('.plan-card').forEach(el => el.classList.remove('selected'));
-            document.getElementById(id).classList.add('selected');
-        }
+    appendMessage('user', text, selectedFileBase64);
+    inputEl.value = '';
 
-        function processPayment() {
-            const card = document.getElementById('cardNumber').value.trim();
-            if (card.length < 12) {
-                alert("Please enter a valid card number!");
-                return;
-            }
-            isVip = true;
-            document.getElementById('userBadge').style.display = 'inline-block';
-            closeModal('paymentModal');
-            alert("Payment Successful! VIP Activated 🎉");
-        }
-
-        function switchVersion(v) {
-            if (v !== '0.5' && !isLogged) {
-                alert("Please sign in with Google to use Pro versions!");
-                openModal('settingsModal');
-                return;
-            }
-            if (v !== '0.5' && !isVip) {
-                alert("This version requires VIP access.");
-                openModal('paymentModal');
-                return;
-            }
-            currentVersion = v;
-            document.getElementById('activeVersionBadge').innerText = `Version ${v} Pro`;
-            closeModal('versionsModal');
-            alert(`Switched to Version ${v}`);
-        }
-
-        function playSynthesizedSound(type) {
-            try {
-                const ctx = new (window.AudioContext || window.webkitAudioContext)();
-                const osc = ctx.createOscillator();
-                const gain = ctx.createGain();
-
-                osc.connect(gain);
-                gain.connect(ctx.destination);
-
-                if (type === '8bit') {
-                    osc.type = 'square';
-                    osc.frequency.setValueAtTime(440, ctx.currentTime);
-                    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3);
-                    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.3);
-                } else {
-                    osc.type = 'sine';
-                    osc.frequency.setValueAtTime(261.63, ctx.currentTime);
-                    osc.frequency.setValueAtTime(329.63, ctx.currentTime + 0.1);
-                    osc.frequency.setValueAtTime(392.00, ctx.currentTime + 0.2);
-                    gain.gain.setValueAtTime(0.2, ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.4);
-                    osc.start();
-                    osc.stop(ctx.currentTime + 0.4);
-                }
-            } catch (e) {
-                console.error("Audio Context Error:", e);
-            }
-        }
-
-        async function sendMessage() {
-            const inputEl = document.getElementById('userInput');
-            const text = inputEl.value.trim();
-
-            if (!text && !selectedFileBase64) return;
-
-            const chatMessages = document.getElementById('chatMessages');
-
-            const userMsgDiv = document.createElement('div');
-            userMsgDiv.className = 'msg-container user';
+    // AI Redaktə və ya Video Modu (Banano / CreateVideo)
+    if (activeMode === 'banano' || activeMode === 'createvideo') {
+        const loadingText = activeMode === 'banano' 
+            ? '✨ Analyzing photo & processing AI Edit...' 
+            : '🎬 Rendering AI Video (takes 10-20 sec)...';
             
-            let userHTML = `<div class="message">${escapeHtml(text)}`;
-            if (selectedFileBase64 && isImageFile) {
-                userHTML += `<br><img src="${selectedFileBase64}" alt="Uploaded Image">`;
-            }
-            userHTML += `</div>`;
-            userMsgDiv.innerHTML = userHTML;
-            chatMessages.appendChild(userMsgDiv);
+        const aiBubble = appendMessage('ai', loadingText);
 
-            inputEl.value = '';
-            const currentImg = selectedFileBase64;
-            clearSelectedImage();
+        try {
+            const res = await fetch("/api/generate", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    mode: activeMode,
+                    text: text,
+                    imageBase64: selectedFileBase64
+                })
+            });
 
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            const data = await res.json();
 
-            conversationMemory.push({ role: "user", content: text });
-
-            const aiMsgDiv = document.createElement('div');
-            aiMsgDiv.className = 'msg-container ai';
-            aiMsgDiv.innerHTML = `<div class="message">Mina1932 thinking...</div>`;
-            chatMessages.appendChild(aiMsgDiv);
-
-            const aiTextBubble = aiMsgDiv.querySelector('.message');
-
-            if (activeMode === 'banano') {
-                const imgUrl = `https://pollinations.ai/p/${encodeURIComponent(text)}?width=1024&height=1024&seed=${Math.floor(Math.random()*1000)}`;
-                aiTextBubble.innerHTML = `🎨 **Generated AI Image:**\n<img src="${imgUrl}" alt="AI Result">`;
-                deactivateMode();
-                return;
+            if (!res.ok) {
+                throw new Error(data.error || "Server processing error");
             }
 
-            if (activeMode === 'createvideo') {
-                aiTextBubble.innerHTML = `🎬 **Video Processing Simulator:**\nRendering Video animation for: "${text}"...\n<video controls width="100%" autoplay loop src="https://www.w3schools.com/html/mov_bbb.mp4"></video>`;
-                deactivateMode();
-                return;
+            if (data.type === 'image') {
+                aiBubble.innerHTML = `🎨 **AI Redaktə Olunmuş Şəkil:**<br><img src="${data.url}" alt="AI Edit" style="max-width:100%; border-radius:8px; margin-top:8px;">`;
+            } else if (data.type === 'video') {
+                aiBubble.innerHTML = `
+                    🎬 **AI Generated Video:**<br>
+                    <video autoplay loop muted controls style="max-width:100%; border-radius:10px; margin-top:8px; border:1px solid var(--accent-blue);">
+                        <source src="${data.url}" type="video/mp4">
+                    </video>`;
             }
 
-            if (activeMode === 'music32') {
-                playSynthesizedSound('8bit');
-                aiTextBubble.innerHTML = `🎵 **Music32 Sound Synth:**\nPlayed 8-Bit Chiptune / Sound FX for prompt: "${text}"!`;
-                deactivateMode();
-                return;
+        } catch (err) {
+            console.error(err);
+            aiBubble.innerText = `❌ Xəta: ${err.message}`;
+        }
+
+        clearSelectedImage();
+        deactivateMode();
+        return;
+    }
+
+    // Normal Mətn AI Sorğusu (Groq API - Llama 3.3 70B)
+    const aiBubble = appendMessage('ai', 'Thinking...');
+    
+    try {
+        conversationMemory.push({ role: "user", content: text });
+
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${GROQ_API_KEY}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                model: "llama-3.3-70b-versatile",
+                messages: [
+                    { role: "system", content: "You are Mina1932, a helpful and intelligent AI assistant built by Mega1932." },
+                    ...conversationMemory
+                ]
+            })
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            aiBubble.innerText = `❌ Groq Xətası (${res.status}): ${data.error?.message || 'Naməlum xəta'}`;
+            return;
+        }
+
+        const reply = data.choices[0]?.message?.content || "No response received.";
+        aiBubble.innerText = reply;
+        conversationMemory.push({ role: "assistant", content: reply });
+    } catch (err) {
+        console.error("Fetch Error:", err);
+        aiBubble.innerText = `❌ Şəbəkə Xətası: ${err.message}`;
+    }
+
+    clearSelectedImage();
+}
+        function appendMessage(sender, text, imgData = null) {
+            const chatBox = document.getElementById('chatMessages');
+            const container = document.createElement('div');
+            container.className = `msg-container ${sender}`;
+
+            let contentHtml = `<div class="message">${escapeHtml(text)}`;
+            if (imgData) {
+                contentHtml += `<br><img src="${imgData}" style="max-width:240px; margin-top:8px;">`;
             }
+            contentHtml += `</div>`;
 
-            try {
-                const response = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST",
-                    headers: {
-                        "Authorization": `Bearer ${GROQ_API_KEY}`,
-                        "Content-Type": "application/json"
-                    },
-                    body: JSON.stringify({
-                        model: "llama-3.3-70b-versatile",
-                        messages: [
-                            { role: "system", content: "You are Mina1932, a helpful, intelligent AI assistant created by Mega1932. Respond cleanly and support markdown format." },
-                            ...conversationMemory
-                        ],
-                        temperature: 0.7
-                    })
-                });
-
-                const data = await response.json();
-                if (data.choices && data.choices[0]) {
-                    const aiReply = data.choices[0].message.content;
-                    conversationMemory.push({ role: "assistant", content: aiReply });
-                    
-                    aiTextBubble.innerHTML = formatMarkdown(aiReply);
-                    
-                    const actionsDiv = document.createElement('div');
-                    actionsDiv.className = 'msg-actions';
-                    actionsDiv.innerHTML = `
+            if (sender === 'ai') {
+                contentHtml += `
+                    <div class="msg-actions">
                         <button class="msg-action-btn" onclick="copyText(this)">📋 Copy</button>
                         <button class="msg-action-btn" onclick="speakSingleText(this)">🔊 Listen</button>
-                    `;
-                    aiMsgDiv.appendChild(actionsDiv);
-
-                    saveChatHistory(text, aiReply);
-                } else {
-                    aiTextBubble.innerText = "Error: Invalid API response received.";
-                }
-            } catch (err) {
-                console.error(err);
-                aiTextBubble.innerText = "Connection error. Please check your network and try again.";
+                    </div>`;
             }
 
-            chatMessages.scrollTop = chatMessages.scrollHeight;
+            container.innerHTML = contentHtml;
+            chatBox.appendChild(container);
+            chatBox.scrollTop = chatBox.scrollHeight;
+
+            return container.querySelector('.message');
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
         function createNewChat() {
+            document.getElementById('chatMessages').innerHTML = '';
             conversationMemory = [];
-            document.getElementById('chatMessages').innerHTML = `
-                <div class="msg-container ai">
-                    <div class="message">New chat started! How can I help you today?</div>
-                </div>
-            `;
+            alert("New chat session started!");
         }
 
-        function saveChatHistory(prompt, response) {
-            chatHistoryStore.push({ prompt, response, time: new Date().toLocaleTimeString() });
-            renderHistoryUI();
-        }
-
-        function renderHistoryUI() {
-            const list = document.getElementById('historyList');
-            list.innerHTML = '';
-            chatHistoryStore.forEach((item, index) => {
-                const div = document.createElement('div');
-                div.className = 'history-item';
-                div.innerHTML = `
-                    <span>💬 ${escapeHtml(item.prompt)}</span>
-                    <div class="history-item-actions">
-                        <button class="history-action-btn" onclick="deleteHistory(${index})">🗑️</button>
-                    </div>
-                `;
-                list.appendChild(div);
-            });
-        }
-
-        function deleteHistory(index) {
-            chatHistoryStore.splice(index, 1);
-            renderHistoryUI();
-        }
-
-        function searchChats(q) {
-            const res = document.getElementById('searchResults');
-            if (!q) {
-                res.innerHTML = '<small style="color: var(--text-muted);">Results will appear here...</small>';
-                return;
-            }
-            const filtered = chatHistoryStore.filter(i => i.prompt.toLowerCase().includes(q.toLowerCase()) || i.response.toLowerCase().includes(q.toLowerCase()));
-            if (filtered.length === 0) {
-                res.innerHTML = '<small style="color: var(--text-muted);">No matches found.</small>';
-                return;
-            }
-            res.innerHTML = filtered.map(i => `<div class="history-item"><span>${escapeHtml(i.prompt)}</span></div>`).join('');
-        }
-
-        let recognition = null;
-        function toggleVoiceInput() {
-            const btn = document.getElementById('mainMicBtn');
-            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
-                alert("Speech recognition is not supported in this browser.");
-                return;
-            }
-
-            if (btn.classList.contains('listening')) {
-                recognition.stop();
-                btn.classList.remove('listening');
-            } else {
-                const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-                recognition = new SpeechRecognition();
-                recognition.continuous = false;
-                recognition.interimResults = false;
-
-                recognition.onstart = () => {
-                    btn.classList.add('listening');
-                };
-
-                recognition.onresult = (e) => {
-                    const transcript = e.results[0][0].transcript;
-                    document.getElementById('userInput').value = transcript;
-                    btn.classList.remove('listening');
-                };
-
-                recognition.onerror = () => {
-                    btn.classList.remove('listening');
-                };
-
-                recognition.onend = () => {
-                    btn.classList.remove('listening');
-                };
-
-                recognition.start();
-            }
+        function copyText(btn) {
+            const msgText = btn.closest('.msg-container').querySelector('.message').innerText;
+            navigator.clipboard.writeText(msgText);
+            btn.innerText = "✓ Copied";
+            setTimeout(() => btn.innerText = "📋 Copy", 2000);
         }
 
         function speakSingleText(btn) {
             const msgText = btn.closest('.msg-container').querySelector('.message').innerText;
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(msgText);
-                window.speechSynthesis.speak(utterance);
+            const utterance = new SpeechSynthesisUtterance(msgText);
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function toggleVoiceInput() {
+            if (!('webkitSpeechRecognition' in window)) {
+                alert("Voice input is not supported in this browser.");
+                return;
             }
+            const recognition = new webkitSpeechRecognition();
+            recognition.lang = currentLang === 'az' ? 'az-AZ' : 'en-US';
+            recognition.start();
+            
+            document.getElementById('mainMicBtn').classList.add('listening');
+
+            recognition.onresult = (e) => {
+                document.getElementById('userInput').value = e.results[0][0].transcript;
+                document.getElementById('mainMicBtn').classList.remove('listening');
+            };
+            recognition.onerror = () => document.getElementById('mainMicBtn').classList.remove('listening');
+            recognition.onend = () => document.getElementById('mainMicBtn').classList.remove('listening');
         }
 
-        function copyText(btn) {
-            const txt = btn.closest('.msg-container').querySelector('.message').innerText;
-            navigator.clipboard.writeText(txt).then(() => {
-                alert("Copied to clipboard!");
-            });
+        function updatePrices() {
+            const currency = document.getElementById('currencySelector').value;
+            const rateObj = currencyRates[currency] || currencyRates['USD'];
+            
+            const price1 = (5 * rateObj.rate).toFixed(1);
+            const price2 = (15 * rateObj.rate).toFixed(1);
+
+            document.getElementById('plan1Title').innerText = `⚡ PRO Monthly Plan - ${rateObj.symbol} ${price1}`;
+            document.getElementById('plan2Title').innerText = `🚀 VIP ULTRA Lifetime Plan - ${rateObj.symbol} ${price2}`;
         }
 
-        function escapeHtml(text) {
-            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        function selectPlan(id, baseUsd) {
+            document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('selected'));
+            document.getElementById(id).classList.add('selected');
+            planBaseUSD = baseUsd;
         }
 
-        function formatMarkdown(text) {
-            let formatted = escapeHtml(text);
-            formatted = formatted.replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>');
-            formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<b>$1</b>');
-            formatted = formatted.replace(/\*(.*?)\*/g, '<i>$1</i>');
-            return formatted;
+        function processPayment() {
+            alert("Payment successful! VIP Activated.");
+            isVip = true;
+            document.getElementById('userBadge').style.display = 'inline-block';
+            closeModal('paymentModal');
+        }
+
+        function switchVersion(ver) {
+            currentVersion = ver;
+            document.getElementById('activeVersionBadge').innerText = `Version ${ver}`;
+            closeModal('versionsModal');
+            alert(`Switched to Version ${ver}`);
+        }
+
+        function searchChats(q) {
+            const res = document.getElementById('searchResults');
+            res.innerHTML = q ? `<small style="color:var(--success)">Search completed for "${q}"</small>` : `<small style="color:var(--text-muted)">Results will appear here...</small>`;
         }
     </script>
 </body>
